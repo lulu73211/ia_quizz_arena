@@ -150,3 +150,21 @@ body {
     padding: 1.5rem 5vw 3rem;
   }
 }
+
+.arena-nav__link--auth {
+  background: var(--arena-accent);
+  color: #0f172a;
+  border-color: var(--arena-accent);
+}
+
+.arena-nav__link--auth:hover {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+button.arena-nav__link {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
