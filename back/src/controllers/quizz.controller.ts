@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { Mistral } from '@mistralai/mistralai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const mistral = new Mistral({
   apiKey: process.env.MISTRAL_API_KEY || '',
@@ -19,7 +22,9 @@ export const getQuizzQuestions = async (req: Request, res: Response) => {
     if (!theme) {
       return res.status(400).json({ error: 'Le thème est requis' });
     }
-    
+
+    console.log(process.env.MISTRAL_API_KEY);
+
     const prompt = `Tu es un générateur de quiz éducatif. Génère 5 questions de quiz sur le thème suivant : "${theme}".
 
 Pour chaque question, fournis :
