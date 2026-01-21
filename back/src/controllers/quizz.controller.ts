@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { Mistral } from '@mistralai/mistralai';
+import { firestore } from '../config/firebase';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,17 +17,51 @@ interface QuizzQuestion {
   explanation?: string;
 }
 
-export const getQuizzQuestions = async (req: Request, res: Response) => {
-  try {
-    const { theme } = req.body;
+interface QuizzData {
+  id?: string;
+  title: string;
+  description: string;
+  theme: string;
+  numberOfQuestions: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  timePerQuestion: number;
+  questions: QuizzQuestion[];
+  ownerId: string;
+  ownerEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
+// Generate quiz questions and store in Firebase
+export const generateQuizzQuestions = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    const { title, description, theme, numberOfQuestions, difficulty, timePerQuestion } = req.body;
+
+    // Validation
     if (!theme) {
       return res.status(400).json({ error: 'Le thème est requis' });
     }
+    if (!title) {
+      return res.status(400).json({ error: 'Le titre est requis' });
+    }
 
-    console.log(process.env.MISTRAL_API_KEY);
+    const questionsCount = numberOfQuestions || 5;
+    const quizDifficulty = difficulty || 'medium';
+    const questionTime = timePerQuestion || 30;
 
-    const prompt = `Tu es un générateur de quiz éducatif. Génère 5 questions de quiz sur le thème suivant : "${theme}".
+    // Map difficulty to French for the prompt
+    const difficultyLabels: Record<string, string> = {
+      easy: 'facile',
+      medium: 'moyen',
+      hard: 'difficile',
+    };
+
+    const prompt = `Tu es un générateur de quiz éducatif. Génère ${questionsCount} questions de quiz sur le thème suivant : "${theme}".
+Le niveau de difficulté doit être : ${difficultyLabels[quizDifficulty] || 'moyen'}.
 
 Pour chaque question, fournis :
 - La question
@@ -71,13 +107,120 @@ IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte av
       return res.status(500).json({ error: 'Impossible de parser la réponse de l\'IA' });
     }
 
-    return res.json({
+    // Create quiz data object
+    const now = new Date().toISOString();
+    const quizData: Omit<QuizzData, 'id'> = {
+      title,
+      description: description || '',
       theme,
+      numberOfQuestions: questionsCount,
+      difficulty: quizDifficulty,
+      timePerQuestion: questionTime,
       questions,
-      count: questions.length,
+      ownerId: req.user.uid,
+      ownerEmail: req.user.email,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // Store in Firebase
+    const docRef = await firestore.collection('quizzes').add(quizData);
+
+    return res.status(201).json({
+      id: docRef.id,
+      ...quizData,
     });
   } catch (error) {
     console.error('Erreur lors de la génération du quiz:', error);
     return res.status(500).json({ error: 'Erreur lors de la génération des questions' });
+  }
+};
+
+// Get all quizzes owned by the current user
+export const getMyQuizzes = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    const snapshot = await firestore
+      .collection('quizzes')
+      .where('ownerId', '==', req.user.uid)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const quizzes: QuizzData[] = [];
+    snapshot.forEach((doc) => {
+      quizzes.push({
+        id: doc.id,
+        ...doc.data(),
+      } as QuizzData);
+    });
+
+    return res.json({
+      quizzes,
+      count: quizzes.length,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des quizzes:', error);
+    return res.status(500).json({ error: 'Erreur lors de la récupération des quizzes' });
+  }
+};
+
+// Get a quiz by ID
+export const getQuizById = async (req: Request, res: Response) => {
+  try {
+    const quizId = req.params.id as string;
+
+    if (!quizId) {
+      return res.status(400).json({ error: 'L\'ID du quiz est requis' });
+    }
+
+    const docRef = await firestore.collection('quizzes').doc(quizId).get();
+
+    if (!docRef.exists) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
+
+    return res.json({
+      id: docRef.id,
+      ...docRef.data(),
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du quiz:', error);
+    return res.status(500).json({ error: 'Erreur lors de la récupération du quiz' });
+  }
+};
+
+// Delete a quiz (only owner can delete)
+export const deleteQuiz = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    const quizId = req.params.id as string;
+
+    if (!quizId) {
+      return res.status(400).json({ error: 'L\'ID du quiz est requis' });
+    }
+
+    const docRef = await firestore.collection('quizzes').doc(quizId).get();
+
+    if (!docRef.exists) {
+      return res.status(404).json({ error: 'Quiz non trouvé' });
+    }
+
+    const quizData = docRef.data();
+    if (quizData?.ownerId !== req.user.uid) {
+      return res.status(403).json({ error: 'Vous n\'êtes pas autorisé à supprimer ce quiz' });
+    }
+
+    await firestore.collection('quizzes').doc(quizId).delete();
+
+    return res.json({ message: 'Quiz supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du quiz:', error);
+    return res.status(500).json({ error: 'Erreur lors de la suppression du quiz' });
   }
 };
