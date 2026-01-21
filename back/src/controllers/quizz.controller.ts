@@ -1,63 +1,83 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
+import { Mistral } from '@mistralai/mistralai';
+import dotenv from 'dotenv';
 
-type QuizConfig = {
-  title: string;
-  description: string;
-  questionCount: number;
-  timeLimitSeconds: number;
-  difficulty: "easy" | "medium" | "hard";
-  theme: string;
-};
+dotenv.config();
 
-type QuizRecord = {
-  id: string;
-  config: QuizConfig;
-  createdAt: string;
-};
+const mistral = new Mistral({
+  apiKey: process.env.MISTRAL_API_KEY || '',
+});
 
-const quizzes: QuizRecord[] = [];
+interface QuizzQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
 
-const sampleQuestion = {
-  id: "q1",
-  prompt: "Which planet is known as the Red Planet?",
-  options: [
-    { id: "a", label: "Mars", isCorrect: true },
-    { id: "b", label: "Venus" },
-    { id: "c", label: "Jupiter" },
-    { id: "d", label: "Saturn" },
-  ],
-  explanation: "Mars looks reddish due to iron oxide on its surface.",
-};
+export const getQuizzQuestions = async (req: Request, res: Response) => {
+  try {
+    const { theme } = req.body;
 
-export const listQuizzes = (_req: Request, res: Response) => {
-  res.json(quizzes);
-};
+    if (!theme) {
+      return res.status(400).json({ error: 'Le thème est requis' });
+    }
 
-export const createQuiz = (req: Request, res: Response) => {
-  const config = req.body as QuizConfig;
-  if (!config?.title) {
-    res.status(400).json({ message: "Title is required." });
-    return;
+    console.log(process.env.MISTRAL_API_KEY);
+
+    const prompt = `Tu es un générateur de quiz éducatif. Génère 5 questions de quiz sur le thème suivant : "${theme}".
+
+Pour chaque question, fournis :
+- La question
+- 4 options de réponse
+- L'index de la bonne réponse (0, 1, 2 ou 3)
+- Une courte explication de la réponse
+
+IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après. Le format doit être exactement :
+[
+  {
+    "question": "La question ici",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": 0,
+    "explanation": "Explication de la réponse"
   }
+]`;
 
-  const record: QuizRecord = {
-    id: `quiz_${Date.now()}`,
-    config,
-    createdAt: new Date().toISOString(),
-  };
-  quizzes.unshift(record);
-  res.status(201).json(record);
-};
+    const response = await mistral.chat.complete({
+      model: 'mistral-small-latest',
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      responseFormat: { type: 'json_object' },
+    });
 
-export const getQuizById = (req: Request, res: Response) => {
-  const record = quizzes.find((quiz) => quiz.id === req.params.id);
-  if (!record) {
-    res.status(404).json({ message: "Quiz not found." });
-    return;
+    const content = response.choices?.[0]?.message?.content;
+
+    if (!content || typeof content !== 'string') {
+      return res.status(500).json({ error: 'Réponse invalide de Mistral' });
+    }
+
+    // Parse JSON response
+    let questions: QuizzQuestion[];
+    try {
+      const parsed = JSON.parse(content);
+      // Handle both array and object with questions property
+      questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
+    } catch (parseError) {
+      console.error('Erreur de parsing JSON:', content);
+      return res.status(500).json({ error: 'Impossible de parser la réponse de l\'IA' });
+    }
+
+    return res.json({
+      theme,
+      questions,
+      count: questions.length,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la génération du quiz:', error);
+    return res.status(500).json({ error: 'Erreur lors de la génération des questions' });
   }
-  res.json(record);
-};
-
-export const getSampleQuestion = (_req: Request, res: Response) => {
-  res.json(sampleQuestion);
 };

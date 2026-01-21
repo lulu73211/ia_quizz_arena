@@ -1,16 +1,20 @@
-import { Router } from "express";
+import { Router } from 'express';
+import { authMiddleware } from '../middlewares/auth.middleware';
 import {
-  createUser,
-  deleteUser,
-  listUsers,
-  updateUser,
-} from "../controllers/users.controller";
+  getProfile,
+  updateProfile,
+  getLeaderboard,
+  updateScore,
+} from '../controllers/users.controller';
 
 const router = Router();
 
-router.get("/", listUsers);
-router.post("/", createUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+// Public routes
+router.get('/leaderboard', getLeaderboard);
+
+// Protected routes (require authentication)
+router.get('/profile', authMiddleware, getProfile);
+router.put('/profile', authMiddleware, updateProfile);
+router.post('/score', authMiddleware, updateScore);
 
 export default router;

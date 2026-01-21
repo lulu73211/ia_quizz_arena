@@ -1,62 +1,122 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
+import { auth, firestore } from '../config/firebase';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
-type UserProfile = {
-  id: string;
-  name: string;
-  email: string;
-  role: "player" | "presenter" | "admin";
+// Get current user profile
+export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    const userDoc = await firestore.collection('users').doc(req.user.uid).get();
+
+    if (!userDoc.exists) {
+      // Create user profile if it doesn't exist
+      const userData = {
+        uid: req.user.uid,
+        email: req.user.email,
+        createdAt: new Date().toISOString(),
+        score: 0,
+        gamesPlayed: 0,
+      };
+      await firestore.collection('users').doc(req.user.uid).set(userData);
+      return res.json(userData);
+    }
+
+    return res.json(userDoc.data());
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
 };
 
-const users: UserProfile[] = [
-  { id: "u1", name: "Alex Morgan", email: "alex@example.com", role: "admin" },
-  { id: "u2", name: "Riley Chen", email: "riley@example.com", role: "player" },
-];
+// Update user profile
+export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
 
-export const listUsers = (_req: Request, res: Response) => {
-  res.json(users);
+    const { displayName, photoURL } = req.body;
+
+    const updates: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (displayName) updates.displayName = displayName;
+    if (photoURL) updates.photoURL = photoURL;
+
+    await firestore.collection('users').doc(req.user.uid).update(updates);
+
+    const updatedDoc = await firestore.collection('users').doc(req.user.uid).get();
+
+    return res.json(updatedDoc.data());
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du profil:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
 };
 
-export const createUser = (req: Request, res: Response) => {
-  const { name, email, role } = req.body as Omit<UserProfile, "id">;
-  if (!name || !email) {
-    res.status(400).json({ message: "Name and email are required." });
-    return;
-  }
+// Get leaderboard
+export const getLeaderboard = async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
 
-  const newUser: UserProfile = {
-    id: `u${Date.now()}`,
-    name,
-    email,
-    role: role ?? "player",
-  };
-  users.unshift(newUser);
-  res.status(201).json(newUser);
+    const snapshot = await firestore
+      .collection('users')
+      .orderBy('score', 'desc')
+      .limit(limit)
+      .get();
+
+    const leaderboard = snapshot.docs.map((doc, index) => ({
+      rank: index + 1,
+      ...doc.data(),
+    }));
+
+    return res.json(leaderboard);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du leaderboard:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
 };
 
-export const updateUser = (req: Request, res: Response) => {
-  const { name, email, role } = req.body as Omit<UserProfile, "id">;
-  const existing = users.find((user) => user.id === req.params.id);
-  if (!existing) {
-    res.status(404).json({ message: "User not found." });
-    return;
-  }
-  if (!name || !email) {
-    res.status(400).json({ message: "Name and email are required." });
-    return;
-  }
+// Update user score
+export const updateScore = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
 
-  existing.name = name;
-  existing.email = email;
-  existing.role = role ?? existing.role;
-  res.json(existing);
-};
+    const { scoreToAdd } = req.body;
 
-export const deleteUser = (req: Request, res: Response) => {
-  const index = users.findIndex((user) => user.id === req.params.id);
-  if (index === -1) {
-    res.status(404).json({ message: "User not found." });
-    return;
+    if (typeof scoreToAdd !== 'number') {
+      return res.status(400).json({ error: 'Score invalide' });
+    }
+
+    const userRef = firestore.collection('users').doc(req.user.uid);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    const currentData = userDoc.data()!;
+    const newScore = (currentData.score || 0) + scoreToAdd;
+    const newGamesPlayed = (currentData.gamesPlayed || 0) + 1;
+
+    await userRef.update({
+      score: newScore,
+      gamesPlayed: newGamesPlayed,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return res.json({
+      score: newScore,
+      gamesPlayed: newGamesPlayed,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du score:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
-  users.splice(index, 1);
-  res.json({ ok: true });
 };
