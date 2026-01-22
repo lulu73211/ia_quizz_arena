@@ -15,7 +15,7 @@ const ROUTES: { key: RouteKey; label: string; authRequired?: boolean }[] = [
   { key: "create", label: "Creation", authRequired: true },
   { key: "presenter", label: "Presentateur" },
   { key: "player", label: "Joueur" },
-  { key: "users", label: "CRUD users", authRequired: true },
+  { key: "users", label: "Liste des Quizzs", authRequired: true },
 ];
 
 const getRouteFromHash = (): RouteKey => {
