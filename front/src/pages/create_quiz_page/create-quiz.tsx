@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { QuizConfigForm } from "../../components";
 import type { QuizConfig } from "../../components/types";
-import { createQuiz } from "../../api/client";
+import { generateQuiz } from "../../api/client";
 
 export default function CreateQuizPage() {
   const [status, setStatus] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export default function CreateQuizPage() {
     setError(null);
     setStatus(null);
     try {
-      const record = await createQuiz(config);
+      const record = await generateQuiz(config);
       setStatus(`Quiz created: ${record.id}`);
     } catch (err) {
       setError(

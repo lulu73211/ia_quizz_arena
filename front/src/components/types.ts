@@ -7,22 +7,40 @@ export type QuizConfig = {
   theme: string;
 };
 
-export type QuizOption = {
-  id: string;
-  label: string;
-  isCorrect?: boolean;
-};
-
 export type QuizQuestion = {
-  id: string;
-  prompt: string;
-  options: QuizOption[];
+  question: string;
+  options: string[];
+  correctAnswer: number;
   explanation?: string;
 };
 
-export type UserProfile = {
+export type QuizData = {
   id: string;
-  name: string;
+  title: string;
+  description: string;
+  theme: string;
+  numberOfQuestions: number;
+  difficulty: "easy" | "medium" | "hard";
+  timePerQuestion: number;
+  questions: QuizQuestion[];
+  ownerId: string;
+  ownerEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UserProfile = {
+  uid: string;
   email: string;
-  role: "player" | "presenter" | "admin";
+  displayName: string;
+  photoURL: string | null;
+  score: number;
+  gamesPlayed: number;
+  gamesWon?: number;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type LeaderboardEntry = UserProfile & {
+  rank: number;
 };

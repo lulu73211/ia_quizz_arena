@@ -25,23 +25,26 @@ export default function QuizPresenter({
         <h2 className="quiz-card__title">
           Question {questionIndex + 1} / {totalQuestions}
         </h2>
-        <p className="quiz-card__subtitle">{question.prompt}</p>
+        <p className="quiz-card__subtitle">{question.question}</p>
       </header>
 
       <div className="quiz-options">
-        {question.options.map((option) => (
-          <div
-            key={option.id}
-            className={`quiz-option ${
-              showAnswer && option.isCorrect ? "quiz-option--correct" : ""
-            }`}
-          >
-            <span className="quiz-option__label">{option.label}</span>
-            {showAnswer && option.isCorrect && (
-              <span className="quiz-option__badge">Correct</span>
-            )}
-          </div>
-        ))}
+        {question.options.map((option, index) => {
+          const isCorrect = index === question.correctAnswer;
+          return (
+            <div
+              key={index}
+              className={`quiz-option ${
+                showAnswer && isCorrect ? "quiz-option--correct" : ""
+              }`}
+            >
+              <span className="quiz-option__label">{option}</span>
+              {showAnswer && isCorrect && (
+                <span className="quiz-option__badge">Correct</span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {question.explanation && showAnswer && (

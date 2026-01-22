@@ -1,12 +1,12 @@
 import { useState } from "react";
 import "./quiz-components.css";
-import type { QuizOption, QuizQuestion } from "./types";
+import type { QuizQuestion } from "./types";
 
 type QuizUserProps = {
   question: QuizQuestion;
   questionIndex: number;
   totalQuestions: number;
-  onAnswer?: (option: QuizOption) => void;
+  onAnswer?: (optionIndex: number) => void;
 };
 
 export default function QuizUser({
@@ -15,13 +15,13 @@ export default function QuizUser({
   totalQuestions,
   onAnswer,
 }: QuizUserProps) {
-  const [selected, setSelected] = useState<QuizOption | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const handleSubmit = () => {
-    if (!selected) {
+    if (selectedIndex === null) {
       return;
     }
-    onAnswer?.(selected);
+    onAnswer?.(selectedIndex);
   };
 
   return (
@@ -31,20 +31,20 @@ export default function QuizUser({
         <h2 className="quiz-card__title">
           Question {questionIndex + 1} / {totalQuestions}
         </h2>
-        <p className="quiz-card__subtitle">{question.prompt}</p>
+        <p className="quiz-card__subtitle">{question.question}</p>
       </header>
 
       <div className="quiz-options">
-        {question.options.map((option) => (
+        {question.options.map((option, index) => (
           <button
-            key={option.id}
+            key={index}
             type="button"
             className={`quiz-option quiz-option--button ${
-              selected?.id === option.id ? "quiz-option--selected" : ""
+              selectedIndex === index ? "quiz-option--selected" : ""
             }`}
-            onClick={() => setSelected(option)}
+            onClick={() => setSelectedIndex(index)}
           >
-            <span className="quiz-option__label">{option.label}</span>
+            <span className="quiz-option__label">{option}</span>
           </button>
         ))}
       </div>
@@ -53,7 +53,7 @@ export default function QuizUser({
         className="quiz-button"
         type="button"
         onClick={handleSubmit}
-        disabled={!selected}
+        disabled={selectedIndex === null}
       >
         Lock answer
       </button>
