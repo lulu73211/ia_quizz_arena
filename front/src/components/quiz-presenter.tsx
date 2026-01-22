@@ -7,7 +7,6 @@ type QuizPresenterProps = {
   questionIndex: number;
   totalQuestions: number;
   showAnswer?: boolean;
-  onNext?: () => void;
 };
 
 export default function QuizPresenter({
@@ -16,7 +15,6 @@ export default function QuizPresenter({
   questionIndex,
   totalQuestions,
   showAnswer = false,
-  onNext,
 }: QuizPresenterProps) {
   return (
     <section className="quiz-card">
@@ -31,17 +29,15 @@ export default function QuizPresenter({
       <div className="quiz-options">
         {question.options.map((option, index) => {
           const isCorrect = index === question.correctAnswer;
+          const isRevealCorrect = showAnswer && isCorrect;
+
           return (
             <div
               key={index}
-              className={`quiz-option ${
-                showAnswer && isCorrect ? "quiz-option--correct" : ""
-              }`}
+              className={`quiz-option ${isRevealCorrect ? "quiz-option--correct" : ""}`}
             >
               <span className="quiz-option__label">{option}</span>
-              {showAnswer && isCorrect && (
-                <span className="quiz-option__badge">Correct</span>
-              )}
+              {isRevealCorrect && <span className="quiz-option__badge">Bonne réponse</span>}
             </div>
           );
         })}
@@ -50,10 +46,6 @@ export default function QuizPresenter({
       {question.explanation && showAnswer && (
         <p className="quiz-callout">{question.explanation}</p>
       )}
-
-      <button className="quiz-button" type="button" onClick={onNext}>
-        Next question
-      </button>
     </section>
   );
 }
