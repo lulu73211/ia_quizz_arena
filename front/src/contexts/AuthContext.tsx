@@ -9,6 +9,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { registerUser, verifyUser } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
@@ -52,20 +53,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const register = async (email: string, password: string, displayName?: string) => {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await createUserWithEmailAndPassword(auth, email, password);
     
     // Register user in backend
-    const token = await result.user.getIdToken();
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    
-    await fetch(`${apiUrl}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ displayName }),
-    });
+    // The client.ts request function will automatically pick up the new token
+    await registerUser(displayName);
   };
 
   const loginWithGoogle = async () => {
@@ -73,26 +65,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const result = await signInWithPopup(auth, provider);
     
     // Check if user exists in backend, if not register
-    const token = await result.user.getIdToken();
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    
-    const verifyResponse = await fetch(`${apiUrl}/auth/verify`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    const verifyData = await verifyResponse.json();
-    
-    if (!verifyData.registered) {
-      await fetch(`${apiUrl}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ displayName: result.user.displayName }),
-      });
+    // The client.ts request function will automatically pick up the new token
+    try {
+      const verifyData = await verifyUser();
+      
+      if (!verifyData.registered) {
+        await registerUser(result.user.displayName || undefined);
+      }
+    } catch (error) {
+      console.error("Error verifying/registering google user:", error);
     }
   };
 
