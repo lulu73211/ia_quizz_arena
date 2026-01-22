@@ -3,7 +3,7 @@ import Accueil from "./pages/accueil_page/accueil";
 import CreateQuizPage from "./pages/create_quiz_page/create-quiz";
 import PresenterPage from "./pages/presenter_page/presenter";
 import PlayerPage from "./pages/player_page/player";
-import UsersPage from "./pages/users_page/users";
+import UsersPage from "./pages/quizzes_page/quizzes";
 import AuthPage from "./pages/auth_page/auth";
 import { useAuth } from "./contexts/AuthContext";
 import "./app.css";

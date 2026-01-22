@@ -73,7 +73,7 @@ function resolveCorrectAnswerText(question: any): string {
   return "";
 }
 
-export function QuizCrud({ initialQuizzes, onRefresh }: Props) {
+export function QuizList({ initialQuizzes, onRefresh }: Props) {
   const [items, setItems] = useState<QuizData[]>(initialQuizzes ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizData | null>(null);

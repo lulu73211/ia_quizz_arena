@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { QuizCrud } from "../../components"
+import { QuizList } from "../../components"
 import type { QuizData } from "../../components/types";
 import { getMyQuizzes } from "../../api/client";
 
@@ -36,7 +36,7 @@ export default function UsersPage() {
         {status && <div className="arena-status">{status}</div>}
         {error && <div className="arena-status arena-status--error">{error}</div>}
 
-        <QuizCrud initialQuizzes={quizzes} onRefresh={refresh} />
+        <QuizList initialQuizzes={quizzes} onRefresh={refresh} />
       </div>
     </section>
   );
