@@ -1,4 +1,4 @@
-import QuizPresenterPanel from "../../components/quizz-presenter-pannel";
+import QuizPresenterPanel from "../../components/quizz-presenter-panel";
 
 export default function PresenterPage() {
   return (
