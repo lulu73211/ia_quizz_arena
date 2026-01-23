@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { QuizData } from "./types";
-import { getQuizById } from "../api/client";
+import { deleteQuiz, getQuizById } from "../api/client";
 
 type Props = {
   initialQuizzes: QuizData[];
@@ -31,7 +31,12 @@ function normalizeAnswers(answers: any): Array<{ id?: string; text: string }> {
     .map((a) => {
       if (typeof a === "string") return { text: a };
       if (a && typeof a === "object") {
-        const id = typeof a.id === "string" ? a.id : typeof a.value === "string" ? a.value : undefined;
+        const id =
+          typeof a.id === "string"
+            ? a.id
+            : typeof a.value === "string"
+              ? a.value
+              : undefined;
         const text = getAnswerText(a);
         return { id, text };
       }
@@ -42,8 +47,11 @@ function normalizeAnswers(answers: any): Array<{ id?: string; text: string }> {
 
 function resolveCorrectAnswerText(question: any): string {
   const answers = normalizeAnswers(question?.answers);
-
-  const ca = question?.correctAnswer ?? question?.correctIndex ?? question?.answerIndex ?? question?.correct;
+  const ca =
+    question?.correctAnswer ??
+    question?.correctIndex ??
+    question?.answerIndex ??
+    question?.correct;
 
   if (typeof ca === "number" && Number.isFinite(ca)) {
     const idx = ca;
@@ -58,14 +66,17 @@ function resolveCorrectAnswerText(question: any): string {
     const byId = answers.find((a) => a.id && a.id === trimmed);
     if (byId) return byId.text;
 
-    const byText = answers.find((a) => a.text.toLowerCase() === trimmed.toLowerCase());
+    const byText = answers.find(
+      (a) => a.text.toLowerCase() === trimmed.toLowerCase(),
+    );
     if (byText) return byText.text;
 
     return trimmed;
   }
 
   if (ca && typeof ca === "object") {
-    if (typeof ca.index === "number" && answers[ca.index]) return answers[ca.index].text;
+    if (typeof ca.index === "number" && answers[ca.index])
+      return answers[ca.index].text;
     const t = getAnswerText(ca);
     if (t) return t;
   }
@@ -80,6 +91,11 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
 
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // confirmation delete
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmTitle, setConfirmTitle] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setItems(initialQuizzes ?? []);
@@ -114,8 +130,56 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [list.length]);
 
+  const askDelete = (id: string, title: string) => {
+    setConfirmId(id);
+    setConfirmTitle(title);
+  };
+
+  const cancelDelete = () => {
+    if (isDeleting) return;
+    setConfirmId(null);
+    setConfirmTitle("");
+  };
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+
+    setIsDeleting(true);
+    setError(null);
+    setStatus("Suppression du quiz…");
+
+    try {
+      await deleteQuiz(confirmId);
+
+      // retire de la liste locale
+      setItems((prev) => prev.filter((q) => getQuizId(q) !== confirmId));
+
+      // si c'était sélectionné, choisir un autre
+      if (selectedId === confirmId) {
+        const remaining = list.filter((x) => x.id !== confirmId);
+        const nextId = remaining[0]?.id ?? null;
+        setSelectedId(null);
+        setSelectedQuiz(null);
+        if (nextId) void selectQuiz(nextId);
+      }
+
+      setStatus(null);
+      setConfirmId(null);
+      setConfirmTitle("");
+
+      // optionnel: refresh serveur
+      onRefresh?.();
+    } catch (e) {
+      setStatus(null);
+      setError(e instanceof Error ? e.message : "Impossible de supprimer le quiz.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      {/* Top bar */}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <div
@@ -130,6 +194,7 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
           >
             {list.length} quiz
           </div>
+
           {selectedQuiz && Array.isArray((selectedQuiz as any).questions) ? (
             <div
               style={{
@@ -178,7 +243,7 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
             <div className="arena-status">Aucun quiz trouvé.</div>
           ) : (
             <div style={{ maxHeight: "68vh", overflow: "auto", paddingRight: 4 }}>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10}}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
                 {list.map(({ q, id }) => {
                   const title = safeString((q as any).title) || "Sans titre";
                   const desc = safeString((q as any).description);
@@ -195,30 +260,62 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
                           textAlign: "left",
                           padding: "12px 12px",
                           borderRadius: 12,
-                          border: isActive ? "1px solid rgba(100,255,180,0.45)" : "1px solid rgba(255,255,255,0.10)",
+                          border: isActive
+                            ? "1px solid rgba(100,255,180,0.45)"
+                            : "1px solid rgba(255,255,255,0.10)",
                           background: isActive ? "rgba(40,160,110,0.12)" : "rgba(255,255,255,0.06)",
                           boxShadow: isActive ? "0 0 0 3px rgba(100,255,180,0.10)" : "none",
                           transition: "transform 120ms ease, background 120ms ease, border 120ms ease",
+                          position: "relative",
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                          <div style={{ fontWeight: 800, fontSize: 15 }}>{title}</div>
-                          {isActive ? (
-                            <span style={{ fontSize: 12, opacity: 0.85 }}>Sélectionné</span>
-                          ) : null}
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                              <div style={{ fontWeight: 800, fontSize: 15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {title}
+                              </div>
+                              {isActive ? <span style={{ fontSize: 12, opacity: 0.85 }}>Sélectionné</span> : null}
+                            </div>
+
+                            {desc ? (
+                              <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4, lineHeight: 1.3 }}>
+                                {desc}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: 13, opacity: 0.55, marginTop: 4 }}>
+                                (Pas de description)
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 🗑️ Poubelle */}
+                          <button
+                            type="button"
+                            title="Supprimer"
+                            aria-label={`Supprimer ${title}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              askDelete(id, title);
+                            }}
+                            disabled={isDeleting}
+                            style={{
+                              flex: "0 0 auto",
+                              width: 34,
+                              height: 34,
+                              borderRadius: 12,
+                              border: "1px solid rgba(255,255,255,0.12)",
+                              background: "rgba(0,0,0,0.18)",
+                              cursor: "pointer",
+                              display: "grid",
+                              placeItems: "center",
+                              opacity: 0.9,
+                            }}
+                          >
+                            🗑️
+                          </button>
                         </div>
-
-                        {desc ? (
-                          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4, lineHeight: 1.3 }}>
-                            {desc}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: 13, opacity: 0.55, marginTop: 4 }}>
-                            (Pas de description)
-                          </div>
-                        )}
-
-                        {/* ID supprimé volontairement */}
                       </button>
                     </li>
                   );
@@ -329,8 +426,7 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
                                 >
                                   {answers.map((a, i) => {
                                     const isCorrect =
-                                      correctText &&
-                                      a.text.toLowerCase() === correctText.toLowerCase();
+                                      correctText && a.text.toLowerCase() === correctText.toLowerCase();
 
                                     return (
                                       <div
@@ -409,6 +505,65 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
           )}
         </div>
       </div>
+
+      {/* CONFIRM MODAL */}
+      {confirmId && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            zIndex: 9999,
+          }}
+          onMouseDown={(e) => {
+            // click outside -> close
+            if (e.target === e.currentTarget) cancelDelete();
+          }}
+        >
+          <div
+            style={{
+              width: "min(520px, 100%)",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(17,24,39,0.92)",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 30px 70px rgba(0,0,0,0.45)",
+              padding: 16,
+              color: "white",
+            }}
+          >
+            <div style={{ fontWeight: 900, fontSize: 18 }}>Supprimer ce quiz ?</div>
+            <div style={{ marginTop: 8, opacity: 0.85, lineHeight: 1.4 }}>
+              Tu es sur le point de supprimer <b>{confirmTitle || "ce quiz"}</b>. Cette action est irréversible.
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="qp-btn"
+                onClick={cancelDelete}
+                disabled={isDeleting}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="qp-btn qp-btn--primary"
+                onClick={doDelete}
+                disabled={isDeleting}
+                style={{ background: "rgba(239,68,68,0.75)", borderColor: "rgba(239,68,68,0.55)" }}
+              >
+                {isDeleting ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
