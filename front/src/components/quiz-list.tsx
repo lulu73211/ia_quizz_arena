@@ -25,28 +25,40 @@ function getAnswerText(answer: any): string {
   return "";
 }
 
-function normalizeAnswers(answers: any): Array<{ id?: string; text: string }> {
-  if (!Array.isArray(answers)) return [];
-  return answers
-    .map((a) => {
-      if (typeof a === "string") return { text: a };
-      if (a && typeof a === "object") {
-        const id =
-          typeof a.id === "string"
-            ? a.id
-            : typeof a.value === "string"
-              ? a.value
-              : undefined;
-        const text = getAnswerText(a);
-        return { id, text };
-      }
-      return { text: "" };
-    })
-    .filter((x) => x.text.trim().length > 0);
+function normalizeAnswers(question: any): Array<{ id?: string; text: string }> {
+  // ✅ backend actuel
+  if (Array.isArray(question?.options)) {
+    return question.options
+      .filter((o: any) => typeof o === "string")
+      .map((o: string) => ({ text: o }));
+  }
+
+  // 🟡 legacy / compat
+  if (Array.isArray(question?.answers)) {
+    return question.answers
+      .map((a: any) => {
+        if (typeof a === "string") return { text: a };
+        if (a && typeof a === "object") {
+          const id =
+            typeof a.id === "string"
+              ? a.id
+              : typeof a.value === "string"
+                ? a.value
+                : undefined;
+          const text = getAnswerText(a);
+          return { id, text };
+        }
+        return { text: "" };
+      })
+      .filter((x: { text: { trim: () => { (): any; new(): any; length: number; }; }; }) => x.text.trim().length > 0);
+  }
+
+  return [];
 }
 
+
 function resolveCorrectAnswerText(question: any): string {
-  const answers = normalizeAnswers(question?.answers);
+  const answers = normalizeAnswers(question);
   const ca =
     question?.correctAnswer ??
     question?.correctIndex ??
@@ -291,30 +303,39 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
 
                           {/* 🗑️ Poubelle */}
                           <button
-                            type="button"
-                            title="Supprimer"
-                            aria-label={`Supprimer ${title}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              askDelete(id, title);
-                            }}
-                            disabled={isDeleting}
-                            style={{
-                              flex: "0 0 auto",
-                              width: 34,
-                              height: 34,
-                              borderRadius: 12,
-                              border: "1px solid rgba(255,255,255,0.12)",
-                              background: "rgba(0,0,0,0.18)",
-                              cursor: "pointer",
-                              display: "grid",
-                              placeItems: "center",
-                              opacity: 0.9,
-                            }}
-                          >
-                            🗑️
-                          </button>
+                          type="button"
+                          title="Supprimer"
+                          aria-label={`Supprimer ${title}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            askDelete(id, title);
+                          }}
+                          disabled={isDeleting}
+                          style={{
+                            flex: "0 0 auto",
+                            width: 34,
+                            height: 34,
+                            borderRadius: 12,
+                            border: "1px solid rgba(239, 68, 68, 0.55)",         
+                            background: "rgba(239, 68, 68, 0.14)",           
+                            color: "rgba(239, 68, 68, 0.95)",                    
+                            cursor: isDeleting ? "not-allowed" : "pointer",
+                            display: "grid",
+                            placeItems: "center",
+                            opacity: isDeleting ? 0.55 : 0.95,
+                            transition: "transform 120ms ease, background 120ms ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "rgba(239, 68, 68, 0.22)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "rgba(239, 68, 68, 0.14)";
+                          }}
+                        >
+                          🗑️
+                        </button>
+
                         </div>
                       </button>
                     </li>
@@ -334,6 +355,7 @@ export function QuizList({ initialQuizzes, onRefresh }: Props) {
             border: "1px solid rgba(255,255,255,0.10)",
             background: "rgba(0,0,0,0.22)",
             backdropFilter: "blur(6px)",
+            color: "#fff",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
