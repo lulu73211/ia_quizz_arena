@@ -6,6 +6,7 @@ import type { QuizConfig } from "./types";
 type QuizConfigFormProps = {
   initial?: Partial<QuizConfig>;
   onCreate?: (config: QuizConfig) => void;
+  isLoading?: boolean;
 };
 
 const DEFAULT_CONFIG: QuizConfig = {
@@ -20,6 +21,7 @@ const DEFAULT_CONFIG: QuizConfig = {
 export default function QuizConfigForm({
   initial,
   onCreate,
+  isLoading = false,
 }: QuizConfigFormProps) {
   const merged = useMemo(
     () => ({ ...DEFAULT_CONFIG, ...initial }),
@@ -34,7 +36,7 @@ export default function QuizConfigForm({
   const [difficulty, setDifficulty] = useState(merged.difficulty);
   const [theme, setTheme] = useState(merged.theme);
 
-  const canSubmit = title.trim().length > 0 && questionCount > 0;
+  const canSubmit = title.trim().length > 0 && questionCount > 0 && !isLoading;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,24 +56,24 @@ export default function QuizConfigForm({
   return (
     <section className="quiz-card">
       <header className="quiz-card__header">
-        <p className="quiz-card__eyebrow">Quiz creation</p>
-        <h2 className="quiz-card__title">Configure a new quiz</h2>
+        <p className="quiz-card__eyebrow">Création de quiz</p>
+        <h2 className="quiz-card__title">Configurer un nouveau quiz</h2>
         <p className="quiz-card__subtitle">
-          Pick a theme and difficulty, then choose how many questions to
-          generate.
+          Choisissez un thème et une difficulté, puis sélectionnez le nombre de questions à générer.
         </p>
       </header>
 
       <form className="quiz-form" onSubmit={handleSubmit}>
         <label className="quiz-field">
-          <span className="quiz-field__label">Title</span>
+          <span className="quiz-field__label">Titre</span>
           <input
             className="quiz-field__input"
             type="text"
-            placeholder="AI Trivia Battle"
+            placeholder="Quiz IA Trivia Battle"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
+            disabled={isLoading}
           />
         </label>
 
@@ -79,44 +81,47 @@ export default function QuizConfigForm({
           <span className="quiz-field__label">Description</span>
           <textarea
             className="quiz-field__input quiz-field__input--area"
-            placeholder="Short summary for players"
+            placeholder="Résumé court pour les joueurs"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={3}
+            disabled={isLoading}
           />
         </label>
 
         <div className="quiz-grid">
           <label className="quiz-field">
-            <span className="quiz-field__label">Theme</span>
+            <span className="quiz-field__label">Thème</span>
             <input
               className="quiz-field__input"
               type="text"
-              placeholder="science, history, music"
+              placeholder="science, histoire, musique"
               value={theme}
               onChange={(event) => setTheme(event.target.value)}
+              disabled={isLoading}
             />
           </label>
 
           <label className="quiz-field">
-            <span className="quiz-field__label">Difficulty</span>
+            <span className="quiz-field__label">Difficulté</span>
             <select
               className="quiz-field__input"
               value={difficulty}
               onChange={(event) =>
                 setDifficulty(event.target.value as QuizConfig["difficulty"])
               }
+              disabled={isLoading}
             >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+              <option value="easy">Facile</option>
+              <option value="medium">Moyen</option>
+              <option value="hard">Difficile</option>
             </select>
           </label>
         </div>
 
         <div className="quiz-grid">
           <label className="quiz-field">
-            <span className="quiz-field__label">Questions</span>
+            <span className="quiz-field__label">Nombre de questions</span>
             <input
               className="quiz-field__input"
               type="number"
@@ -126,11 +131,12 @@ export default function QuizConfigForm({
               onChange={(event) =>
                 setQuestionCount(Number(event.target.value))
               }
+              disabled={isLoading}
             />
           </label>
 
           <label className="quiz-field">
-            <span className="quiz-field__label">Time per question (sec)</span>
+            <span className="quiz-field__label">Temps par question (sec)</span>
             <input
               className="quiz-field__input"
               type="number"
@@ -140,12 +146,24 @@ export default function QuizConfigForm({
               onChange={(event) =>
                 setTimeLimitSeconds(Number(event.target.value))
               }
+              disabled={isLoading}
             />
           </label>
         </div>
 
-        <button className="quiz-button" type="submit" disabled={!canSubmit}>
-          Create quiz
+        <button 
+          className={`quiz-button ${isLoading ? 'quiz-button--loading' : ''}`} 
+          type="submit" 
+          disabled={!canSubmit}
+        >
+          {isLoading ? (
+            <>
+              <span className="quiz-button__spinner"></span>
+              Génération en cours...
+            </>
+          ) : (
+            'Créer le quiz'
+          )}
         </button>
       </form>
     </section>

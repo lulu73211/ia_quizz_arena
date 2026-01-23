@@ -80,7 +80,7 @@ IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte av
 ]`;
 
     const response = await mistral.chat.complete({
-      model: 'mistral-small-latest',
+      model: 'mistral-large-latest',
       messages: [
         {
           role: 'user',
