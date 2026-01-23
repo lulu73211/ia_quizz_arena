@@ -60,14 +60,20 @@ export const generateQuizzQuestions = async (req: AuthenticatedRequest, res: Res
       hard: 'difficile',
     };
 
+    const refinement = description ? `Prends en compte le commentaire suivant : ${description}` : '';
+
     const prompt = `Tu es un générateur de quiz éducatif. Génère ${questionsCount} questions de quiz sur le thème suivant : "${theme}".
 Le niveau de difficulté doit être : ${difficultyLabels[quizDifficulty] || 'moyen'}.
+
+${refinement}
 
 Pour chaque question, fournis :
 - La question
 - 4 options de réponse
 - L'index de la bonne réponse (0, 1, 2 ou 3)
 - Une courte explication de la réponse
+
+Fait en sorte de bien randomiser les réponses, par exemple si la bonne réponse est la première, il faut qu'elle ait 25% de chance d'être à n'importe quelle position.
 
 IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après. Le format doit être exactement :
 [
