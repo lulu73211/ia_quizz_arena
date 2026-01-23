@@ -1,7 +1,6 @@
-```
-# 🎯 QuizAI
+# 🎯 IA QUIZZ ARENA
 
-**QuizAI** est une application web de quiz interactive comprenant :
+**IA QUIZZ ARENA** est une application web de quiz interactive comprenant :
 
 - 🧠 Génération automatique de quiz via l’API **Mistral**
 - 🎤 Mode Présentateur (pilotage du quiz)
@@ -16,7 +15,7 @@
 
 ```
 
-QuizAI/
+IA QUIZZ ARENA/
 ├── back/        # Backend Node.js / Express
 ├── front/       # Frontend React + TypeScript (Vite)
 └── README.md
@@ -51,7 +50,7 @@ Cloner le dépôt :
 
 ```bash
 git clone <url-du-repo>
-cd QuizAI
+cd IA QUIZZ ARENA
 ```
 
 ---
@@ -264,16 +263,6 @@ Libre à toi de l’adapter, le modifier ou le déployer.
 
 ---
 
-✨ Bon dev et amuse-toi bien avec QuizAI !
+✨ Bon dev et amuse-toi bien avec IA QUIZZ ARENA !
 
-```
-
----
-
-Si tu veux, je peux aussi te faire :
-- une **version Docker**
-- un **README orienté GitHub (badges, screenshots)**
-- ou une **section “Déploiement prod”**
-
-👉 dis-moi 👍
 ```
