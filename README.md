@@ -40,7 +40,7 @@ node -v
 # doit afficher v24.13.0
 ````
 
-En cas de mauvaise version:
+### En cas de mauvaise version:
 Utiliser nvm pour pouvoir passer d'une version à l'autre
 
 Vérifier que nvm est bien installé :
@@ -48,7 +48,8 @@ Vérifier que nvm est bien installé :
 nvm --version
 ````
 Lien d'installation Windows: https://github.com/coreybutler/nvm/releases
-Liens d'installation pour Linux et Mac: https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script
+
+Lien d'installation pour Linux et Mac: https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script
 
 1️⃣ Installer Node.js 24.13.10
 ````
