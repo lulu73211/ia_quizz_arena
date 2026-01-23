@@ -2,21 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import Accueil from "./pages/accueil_page/accueil";
 import CreateQuizPage from "./pages/create_quiz_page/create-quiz";
 import PresenterPage from "./pages/presenter_page/presenter";
-import PlayerPage from "./pages/player_page/player";
 import UsersPage from "./pages/quizzes_page/quizzes";
 import AuthPage from "./pages/auth_page/auth";
 import QuizRoomPage from "./pages/quiz_room_page/quiz-room";
 import { useAuth } from "./contexts/AuthContext";
 import "./app.css";
 
-type RouteKey = "accueil" | "create" | "presenter" | "player" | "users" | "auth" | "room";
+type RouteKey = "accueil" | "create" | "presenter" | "users" | "auth" | "room";
 
 const ROUTES: { key: RouteKey; label: string; authRequired?: boolean }[] = [
   { key: "accueil", label: "Accueil" },
   { key: "room", label: "Quiz Live" },
   { key: "create", label: "Creation", authRequired: true },
   { key: "presenter", label: "Presentateur" },
-  { key: "player", label: "Joueur" },
   { key: "users", label: "Liste des Quizzs", authRequired: true },
 ];
 
@@ -31,7 +29,7 @@ const getRouteFromHash = (): { route: RouteKey; roomCode?: string } => {
     }
   }
   
-  if (hash === "create" || hash === "presenter" || hash === "player" || hash === "room") {
+  if (hash === "create" || hash === "presenter" || hash === "room") {
     return { route: hash };
   }
   if (hash === "users") {
@@ -94,9 +92,6 @@ export default function App() {
     }
     if (route === "presenter") {
       return <PresenterPage />;
-    }
-    if (route === "player") {
-      return <PlayerPage />;
     }
     if (route === "users") {
       return <UsersPage />;

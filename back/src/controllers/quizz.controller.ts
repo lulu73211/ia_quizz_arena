@@ -62,28 +62,36 @@ export const generateQuizzQuestions = async (req: AuthenticatedRequest, res: Res
 
     const refinement = description ? `Prends en compte le commentaire suivant : ${description}` : '';
 
-    const prompt = `Tu es un générateur de quiz éducatif. Génère ${questionsCount} questions de quiz sur le thème suivant : "${theme}".
-Le niveau de difficulté doit être : ${difficultyLabels[quizDifficulty] || 'moyen'}.
+    const prompt = `
+Rôle : Tu es un expert en pédagogie et un générateur de quiz de haute précision.
+Tâche : Générer ${questionsCount} questions de quiz uniques et variées sur le thème : "${theme}".
+Niveau de difficulté : ${difficultyLabels[quizDifficulty] || 'moyen'}.
 
-${refinement}
+${refinement ? `Consigne spécifique supplémentaire : ${refinement}` : ''}
 
-Pour chaque question, fournis :
-- La question
-- 4 options de réponse
-- L'index de la bonne réponse (0, 1, 2 ou 3)
-- Une courte explication de la réponse
+Exigences de contenu :
+1. Diversité : Les questions doivent couvrir différents sous-aspects du thème (histoire, théorie, pratique, anecdotes, etc.) pour éviter la redondance.
+2. Clarté : Les questions doivent être sans ambiguïté.
+3. Pertinence : Les mauvaises réponses (distracteurs) doivent être plausibles mais clairement fausses.
 
-Fait en sorte de bien randomiser les réponses, par exemple si la bonne réponse est la première, il faut qu'elle ait 25% de chance d'être à n'importe quelle position.
+Exigences de Randomisation (CRITIQUE) :
+1. Distribution des réponses : La position de la bonne réponse (index 0, 1, 2 ou 3) doit être distribuée de manière équitable sur l'ensemble du quiz.
+2. Anti-Répétition : Il est impératif de ne pas placer la bonne réponse au même index deux fois de suite (ex: si Q1 est index 0, Q2 ne doit PAS être index 0).
+3. Mélange : Varie les structures de phrases pour ne pas lasser le lecteur.
 
-IMPORTANT : Réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après. Le format doit être exactement :
+Format de sortie :
+Réponds UNIQUEMENT avec un tableau JSON valide brut. Pas de Markdown (pas de \`\`\`json), pas d'introduction, pas de conclusion.
+
+Structure JSON attendue :
 [
   {
-    "question": "La question ici",
+    "question": "L'énoncé de la question",
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": 0,
-    "explanation": "Explication de la réponse"
+    "correctAnswer": int (0-3),
+    "explanation": "Une explication concise et pédagogique (max 2 phrases)."
   }
-]`;
+]
+`;
 
     const response = await mistral.chat.complete({
       model: 'mistral-large-latest',
