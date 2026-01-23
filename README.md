@@ -1,176 +1,287 @@
-# QuizAI — README
+# 🎯 IA QUIZZ ARENA
 
-Application web de quiz avec :
-- **Backend** Node.js + Express
-- **Frontend** (React/TS) avec interfaces **Présentateur** et **Joueur**
-- Stockage des quiz dans **Firebase Firestore**
-- Génération de questions via **Mistral API**
+**IA QUIZZ ARENA** est une application web de quiz interactive comprenant :
 
----
-
-## Prérequis
-
-- **Node.js LTS 24.11.0**
-- **npm** (fourni avec Node)
-- Un projet **Firebase** (Firestore activé + service account)
-- Une clé API **Mistral**
+- 🧠 Génération automatique de quiz via l’API **Mistral**
+- 🎤 Mode Présentateur (pilotage du quiz)
+- 🎮 Mode Joueur (répondre aux questions)
+- 🔥 Backend **Node.js / Express**
+- ⚛️ Frontend **React + TypeScript**
+- ☁️ Stockage **Firebase Firestore**
 
 ---
 
-## Installation
+## 🧩 Architecture du projet
 
-Clone le repo puis installe les dépendances des 2 projets (front + back).
+```
+IA QUIZZ ARENA/
+├── back/        # Backend Node.js / Express
+├── front/       # Frontend React + TypeScript (Vite)
+└── README.md
+````
 
-### 1) Installer le backend
+---
 
-```bash```
+## ⚙️ Prérequis
+
+Assure-toi d’avoir les éléments suivants installés :
+
+- ✅ **Node.js LTS 24.13.0**
+- ✅ **npm** (fourni avec Node)
+- ✅ Un projet **Firebase**
+  - Firestore activé
+  - Clé de service (Service Account)
+- ✅ Une **clé API Mistral**
+
+Vérifier la version de Node.js :
+
+```bash
+node -v
+# doit afficher v24.13.0
+````
+
+### En cas de mauvaise version:
+Utiliser nvm pour pouvoir passer d'une version à l'autre
+
+Vérifier que nvm est bien installé :
+````
+nvm --version
+````
+Lien d'installation Windows: https://github.com/coreybutler/nvm/releases
+
+Lien d'installation pour Linux et Mac: https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script
+
+1️⃣ Installer Node.js 24.13.10
+````
+nvm install 24.13.10
+````
+
+2️⃣ Utiliser cette version
+````
+nvm use 24.13.10
+````
+
+---
+
+## 📦 Installation
+
+Cloner le dépôt :
+
+```bash
+git clone <url-du-repo>
+cd IA QUIZZ ARENA
+```
+
+---
+
+### 🔙 Installation du backend
+
+```bash
 cd back
 npm install
-### 2) Installer le frontend
-```bash```
-Copier le code
+```
+
+---
+
+### 🔜 Installation du frontend
+
+```bash
 cd ../front
 npm install
-Configuration des variables d’environnement
-Backend (back/.env)
-Crée un fichier back/.env :
+```
 
-env
-Copier le code
+---
+
+## 🔐 Configuration des variables d’environnement
+
+### Backend — `back/.env`
+
+Créer un fichier `back/.env` :
+
+```env
+# =========================
 # Mistral
-MISTRAL_API_KEY=xxxxxxxxxxxxxxxx
+# =========================
+MISTRAL_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
 
-# Port backend
+# =========================
+# Server
+# =========================
 PORT=3001
 
+# =========================
 # Firebase
+# =========================
 FIREBASE_PROJECT_ID=your_project_id
 FIREBASE_CLIENT_EMAIL=your_service_account_email
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-⚠️ Important : FIREBASE_PRIVATE_KEY doit contenir les \n (retours à la ligne) comme ci-dessus.
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nXXXXX\n-----END PRIVATE KEY-----\n"
+```
 
-Où récupérer ces infos Firebase ?
-Dans Firebase Console :
+⚠️ **Important**
+La variable `FIREBASE_PRIVATE_KEY` doit contenir les `\n` pour les retours à la ligne.
 
-Project settings → Service accounts
+📍 Firebase Console →
+**Project Settings → Service Accounts → Generate new private key**
 
-Génère une Private key JSON
+---
 
-Récupère :
+### Frontend — `front/.env`
 
-project_id → FIREBASE_PROJECT_ID
+Créer un fichier `front/.env` :
 
-client_email → FIREBASE_CLIENT_EMAIL
-
-private_key → FIREBASE_PRIVATE_KEY
-
-Frontend (front/.env)
-Crée un fichier front/.env :
-
-env
-Copier le code
+```env
 VITE_API_URL=http://localhost:3001
-Si ton client.ts utilise déjà une URL en dur, adapte-le pour lire import.meta.env.VITE_API_URL.
+```
 
-Lancer le projet en développement
-### 1) Démarrer le backend
-bash
-Copier le code
+---
+
+## ▶️ Lancer le projet en développement
+
+### 1️⃣ Lancer le backend
+
+```bash
 cd back
 npm run dev
-Le backend doit écouter sur :
+```
 
-http://localhost:3001
+➡️ Backend disponible sur :
+**[http://localhost:3001](http://localhost:3001)**
 
-### 2) Démarrer le frontend
-bash
-Copier le code
+---
+
+### 2️⃣ Lancer le frontend
+
+```bash
 cd ../front
 npm run dev
-Le front sera disponible sur :
+```
 
-http://localhost:5173 (ou autre port Vite)
+➡️ Frontend disponible sur :
+**[http://localhost:5173](http://localhost:5173)**
 
-Scripts utiles
-Backend
-Depuis back/ :
+---
 
-Démarrer en dev (watch) :
+## 📜 Scripts disponibles
 
-bash
-Copier le code
-npm run dev
-Build :
+### Backend (`/back`)
 
-bash
-Copier le code
-npm run build
-Démarrer en prod :
+```bash
+npm run dev   
+npm run build   
+npm start       
 
-bash
-Copier le code
-npm start
-Frontend
-Depuis front/ :
+---
 
-Démarrer en dev :
+### Frontend (`/front`)
 
-bash
-Copier le code
-npm run dev
-Build :
+```bash
+npm run dev      
+npm run build     
+npm run preview   
+```
 
-bash
-Copier le code
-npm run build
-Preview build :
+---
 
-bash
-Copier le code
-npm run preview
-Endpoints API (backend)
-Base: http://localhost:3001
+## 🔌 API Backend
 
-POST /quizz/generate (auth requise)
-Génère un quiz via Mistral et l’enregistre sur Firestore.
+**Base URL** : `http://localhost:3001`
 
-GET /quizz/my-quizzes (auth requise)
-Retourne les quiz du user connecté.
+### Générer un quiz
 
-GET /quizz (public, si activé)
-Retourne tous les quiz (utile pour que le player choisisse).
+`POST /quizz/generate` 🔒
+Génère un quiz via Mistral et l’enregistre dans Firestore.
 
-GET /quizz/:id (selon ta logique : public ou owner-only)
-Retourne un quiz par id.
+---
 
-DELETE /quizz/:id (auth requise)
-Supprime un quiz (owner only).
+### Récupérer mes quiz
 
-Dépannage
-1) “Non authentifié”
-Ton front appelle un endpoint protégé sans token.
+`GET /quizz/my-quizzes` 🔒
+Retourne les quiz appartenant à l’utilisateur connecté.
 
-Vérifie que ton système d’auth (Firebase Auth / middleware) injecte bien Authorization: Bearer <token>.
+---
 
-2) Private key Firebase invalide
-Assure-toi que FIREBASE_PRIVATE_KEY a bien des \n
+### Récupérer un quiz par ID
 
-Exemple :
+`GET /quizz/:id`
+Retourne le détail d’un quiz.
 
-env
-Copier le code
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nXXXX\n-----END PRIVATE KEY-----\n"
-3) Le front n’appelle pas le bon backend
-Vérifie VITE_API_URL
+---
 
-Vérifie aussi le CORS côté backend si nécessaire.
+### Supprimer un quiz
 
-Notes
-Les quiz sont stockés dans Firestore collection : quizzes
+`DELETE /quizz/:id` 🔒
+Supprime un quiz (uniquement le propriétaire).
 
-Chaque quiz contient : title, description, theme, questions[], ownerId, etc.
+---
 
-Les questions contiennent : question, options[4], correctAnswer (0..3), explanation
+## 🧠 Modèle de données
 
-Licence
-Projet perso / interne — à adapter selon ton usage.
+### Quiz
+
+```ts
+{
+  title: string
+  description: string
+  theme: string
+  difficulty: "easy" | "medium" | "hard"
+  timePerQuestion: number
+  questions: QuizQuestion[]
+  ownerId: string
+  createdAt: string
+}
+```
+
+---
+
+### Question
+
+```ts
+{
+  question: string
+  options: string[4]
+  correctAnswer: number
+  explanation?: string
+}
+```
+
+---
+
+## 🧪 Dépannage
+
+### ❌ “Non authentifié”
+
+➡️ Le frontend appelle une route protégée sans token.
+
+✔️ Vérifier :
+
+* Middleware d’auth actif
+* Header `Authorization: Bearer <token>`
+
+---
+
+### ❌ Erreur Firebase private key
+
+✔️ Vérifier les `\n` dans `FIREBASE_PRIVATE_KEY`.
+
+---
+
+### ❌ Le frontend ne communique pas avec le backend
+
+✔️ Vérifier :
+
+* `VITE_API_URL`
+* Le port du backend
+* La configuration CORS si nécessaire
+
+---
+
+## 📄 Licence
+
+Projet personnel / expérimental.
+Libre à toi de l’adapter, le modifier ou le déployer.
+
+---
+
+✨ Bon dev et amuse-toi bien avec IA QUIZZ ARENA !
+
+```
