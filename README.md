@@ -14,12 +14,10 @@
 ## 🧩 Architecture du projet
 
 ```
-
 IA QUIZZ ARENA/
 ├── back/        # Backend Node.js / Express
 ├── front/       # Frontend React + TypeScript (Vite)
 └── README.md
-
 ````
 
 ---
@@ -28,7 +26,7 @@ IA QUIZZ ARENA/
 
 Assure-toi d’avoir les éléments suivants installés :
 
-- ✅ **Node.js LTS 24.11.0**
+- ✅ **Node.js LTS 24.13.0**
 - ✅ **npm** (fourni avec Node)
 - ✅ Un projet **Firebase**
   - Firestore activé
@@ -40,6 +38,26 @@ Vérifier la version de Node.js :
 ```bash
 node -v
 # doit afficher v24.13.0
+````
+
+En cas de mauvaise version:
+Utiliser nvm pour pouvoir passer d'une version à l'autre
+
+Vérifier que nvm est bien installé :
+````
+nvm --version
+````
+Lien d'installation Windows: https://github.com/coreybutler/nvm/releases
+Liens d'installation pour Linux et Mac: https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script
+
+1️⃣ Installer Node.js 24.13.10
+````
+nvm install 24.13.10
+````
+
+2️⃣ Utiliser cette version
+````
+nvm use 24.13.10
 ````
 
 ---
