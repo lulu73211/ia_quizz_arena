@@ -18,10 +18,9 @@ export default function QuizUser({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const handleSubmit = () => {
-    if (selectedIndex === null) {
-      return;
-    }
+    if (selectedIndex === null) return;
     onAnswer?.(selectedIndex);
+    setSelectedIndex(null);
   };
 
   return (
